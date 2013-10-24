@@ -44,7 +44,13 @@ def main():
 
     # set up a logger
     logger = logging.getLogger(name="onChanges")
-    logging.basicConfig(format='%(asctime)s> %(message)s', datefmt='%H:%M:%S')
+    prefix = '\033['
+    suffix = '\033[0m'
+    # 35: magenta, 33: yellow, 36: cyan
+    logging.basicConfig(
+        format='{0}35m%(asctime)s{1} {0}36m>{1} {0}33m%(message)s{1}'.format(
+        prefix, suffix
+    ), datefmt='%H:%M:%S')
     logger.setLevel(logging.INFO)
 
     # read files names from stdin, one line as one file
@@ -65,6 +71,11 @@ def main():
                 proc = subprocess.Popen(command, shell=True, stdout=sys.stdout,
                                 stderr=sys.stderr)
                 proc.communicate()  # wait for completion
+                if proc.returncode:  # not 0
+                    # red: 31
+                    logger.error("{0}31mcommand `{2}` runs out error!{1}".format(
+                        prefix, suffix, command
+                    ))
                 dct = new_dct
                 logger.info("waiting for changes..")
     except KeyboardInterrupt:
