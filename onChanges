@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+# coding=utf8
+
+
+"""
+    onChanges
+    ~~~~~~~~~
+
+    Watch given files and run certain command on changes.
+    :author: hit9
+    :license: BSD
+"""
+
+__version__ = '0.0.1'
+__doc__ = """Usage:
+  onChanges (-r|--run) <command>
+  onChanges -h|--help
+  onChanges -v|--version
+
+Options:
+  -h --help     show this message
+  -v --version  show version
+
+Examples:
+  ls | onChanges --run make
+  ls | grep .c | onChanges --run make
+  find /path -type f | onChanges --run make
+  tree -fi | onChanges -run make
+"""
+
+
+from datetime import datetime
+import logging
+import os
+import subprocess
+import sys
+import time
+
+import docopt
+
+
+def file_stats(files):
+    dct = {}
+
+    for file in files:
+        dct[file] = os.stat(file).st_mtime
+
+    return dct
+
+
+def main():
+    args = docopt.docopt(__doc__, version=__version__)
+
+    command = args["<command>"]
+
+    # set up a logger
+    logger = logging.getLogger(name="onChanges")
+    logging.basicConfig(format='%(asctime)s> %(message)s', datefmt='%H:%M:%S')
+    logger.setLevel(logging.INFO)
+
+    # read files names from stdin, one line as one file
+    lines = sys.stdin.readlines()
+    files = [line.rstrip('\n') for line in lines]
+
+    # filename: file's update time
+    dct = {}
+
+    try:
+        logger.info("started, ctrl-c to stop")
+        while 1:
+            time.sleep(1)  # check every 1s
+            new_dct = file_stats(files)
+            if dct != new_dct:
+                logger.info("changes detected, run `%s`.." % command)
+                dct = new_dct
+                proc = subprocess.Popen(command, shell=True, stdout=sys.stdout,
+                                stderr=sys.stderr)
+                proc.communicate()  # wait for completion
+                dct = new_dct
+                logger.info("waiting for changes..")
+    except KeyboardInterrupt:
+        logger.info("^C received, stopped")
+
+
+if __name__ == '__main__':
+    main()
