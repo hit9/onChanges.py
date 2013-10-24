@@ -23,8 +23,7 @@ Options:
 
 Examples:
   ls | onChanges --run make
-  ls | grep .c | onChanges --run make
-  find /path -type f | onChanges --run make
+  find . -type f -name "*.c" | onChanges --run make
   tree -fi | onChanges -run make
 """
 
