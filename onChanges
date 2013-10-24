@@ -28,7 +28,6 @@ Examples:
 """
 
 
-from datetime import datetime
 import logging
 import os
 import subprocess
@@ -36,15 +35,6 @@ import sys
 import time
 
 import docopt
-
-
-def file_stats(files):
-    dct = {}
-
-    for file in files:
-        dct[file] = os.stat(file).st_mtime
-
-    return dct
 
 
 def main():
@@ -68,7 +58,7 @@ def main():
         logger.info("started, ctrl-c to stop")
         while 1:
             time.sleep(1)  # check every 1s
-            new_dct = file_stats(files)
+            new_dct = dict((f, os.stat(f).st_mtime) for f in files)
             if dct != new_dct:
                 logger.info("changes detected, run `%s`.." % command)
                 dct = new_dct
