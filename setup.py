@@ -1,10 +1,9 @@
 from setuptools import setup
-from onChanges import __version__
 
 
 setup(
     name='onChanges',
-    version=__version__,
+    version='0.0.1',
     author='hit9',
     author_email='nz2324@126.com',
     description=(
