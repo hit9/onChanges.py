@@ -3,6 +3,13 @@ onChanges
 
 Watch given files and run certain command on changes.
 
+Installation
+------------
+
+```
+pip install git+git://github.com/hit9/onChanges.py.git
+```
+
 Usage
 -----
 
@@ -24,7 +31,7 @@ $ ls | grep -P ".*\.c$" | onChanges --run make
 or:
 
 ```bash
-find . -type f -name "*.c" | onChanges --run make
+$ find . -type f -name "*.c" | onChanges --run make
 ```
 
 Input String Should Be
