@@ -1,0 +1,9 @@
+.*.swp
+.*.swo
+*.pyc
+*.pyo
+venv
+test*
+build
+dist
+onChanges.egg*
