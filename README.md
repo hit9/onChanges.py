@@ -27,7 +27,12 @@ or:
 find . -type f -name "*.c" | onChanges --run make
 ```
 
-About
------
+Input String Should Be
+-----------------------
 
-The input should be a string, which each line is an available filepath.
+The input string's each line should be an available filepath.
+
+Why make this tool
+------------------
+
+To auto build when I am saving my source files.
