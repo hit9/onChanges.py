@@ -14,18 +14,18 @@
 __version__ = '0.0.2'
 
 __doc__ = """Usage:
-  onChanges (-r|--run) <command> [(-d|--directory) <directory>] [(-p|--pattern) <pattern>]
+  onChanges <command> [-d DIR] [-p PATTERN]
   onChanges -h|--help
   onChanges -v|--version
 
 Options:
-  -h --help       show this message
-  -v --version    show version
-  -d --directory  files' directory path, default: .
-  -p --pattern    pattern to filter files default: *
+  -h --help        show this message
+  -v --version     show version
+  -d DIR           files directory path [default: .]
+  -p PATTERN       filename pattern [default: *]
 
 Examples:
-  onChanges -r 'make html' -p '*.rst'
+  onChanges 'make html' -p '*.rst'
 """
 
 import os
@@ -88,8 +88,8 @@ class DirectoryNotFound(OnChangesException):
 def main():
     args = docopt.docopt(__doc__, version=__version__)
     command = args['<command>']
-    directory = args['<directory>'] if args['--directory'] else '.'
-    pattern = args['<pattern>'] if args['--pattern'] else '*'
+    directory = args['-d']
+    pattern = args['-p']
 
     # setup a logger
     logger = logging.getLogger(name='onChanges')

@@ -13,15 +13,20 @@ pip install git+git://github.com/hit9/onChanges.py.git
 Usage
 -----
 
-    onChanges (-r|--run) <command> [(-d|--directory) <directory>] [(-p|--pattern) <pattern>]
+    onChanges <command> [-d DIR] [-p PATTERN]
+ 
+Options:
+
+    -d DIR           files directory path [default: .]
+    -p PATTERN       filename pattern [default: *]
 
 Examples
 ---------
 
 ```bash
-onChanges -r make -d src -p '*.c'
+onChanges make -d src -p '*.c'
 ```
 
 ```bash
-onChanges -r 'make html' -d docs -p '*.rst'
+onChanges 'make html' -d docs -p '*.rst'
 ```
