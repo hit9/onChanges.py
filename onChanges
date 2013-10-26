@@ -11,75 +11,129 @@
     :license: BSD
 """
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
+
 __doc__ = """Usage:
-  onChanges (-r|--run) <command>
+  onChanges (-r|--run) <command> [(-d|--directory) <directory>] [(-p|--pattern) <pattern>]
   onChanges -h|--help
   onChanges -v|--version
 
 Options:
-  -h --help     show this message
-  -v --version  show version
+  -h --help       show this message
+  -v --version    show version
+  -d --directory  files' directory path, default: .
+  -p --pattern    pattern to filter files default: *
 
 Examples:
-  ls | onChanges --run make
-  find . -type f -name "*.c" | onChanges --run make
-  tree -fi | onChanges -run make
+  onChanges -r 'make html' -p '*.rst'
 """
 
-
-import logging
 import os
-import subprocess
 import sys
 import time
+import fnmatch
+import logging
+import subprocess
 
 import docopt
 
 
-def main():
-    args = docopt.docopt(__doc__, version=__version__)
+class Color(object):
+    """
+    utility to return colored ansi text.
+    usage::
 
-    command = args["<command>"]
+        >>> colored("text", "red")
+        '\x1b[31mtext\x1b[0m']]'
 
-    # set up a logger
-    logger = logging.getLogger(name="onChanges")
+    """
+
+    colors = {
+        'black': 30,
+        'red': 31,
+        'green': 32,
+        'yellow': 33,
+        'blue': 34,
+        'magenta': 35,
+        'cyan': 36,
+        'white': 37,
+        'bgred': 41,
+        'bggrey': 100
+    }
+
     prefix = '\033['
     suffix = '\033[0m'
-    # 35: magenta, 33: yellow, 36: cyan
-    logging.basicConfig(
-        format='{0}35m%(asctime)s{1} {0}36m>{1} {0}33m%(message)s{1}'.format(
-        prefix, suffix
-    ), datefmt='%H:%M:%S')
+
+    def colored(self, text, color=None):
+
+        if color not in self.colors:
+            color = 'white'
+
+        clr = self.colors[color]
+        return (self.prefix + '%dm%s' + self.suffix) % (clr, text)
+
+
+colored = Color().colored
+
+
+class OnChangesException(Exception):
+    pass
+
+
+class DirectoryNotFound(OnChangesException):
+    """directory not found"""
+    pass
+
+
+def main():
+    args = docopt.docopt(__doc__, version=__version__)
+    command = args['<command>']
+    directory = args['<directory>'] if args['--directory'] else '.'
+    pattern = args['<pattern>'] if args['--pattern'] else '*'
+
+    # setup a logger
+    logger = logging.getLogger(name='onChanges')
+    formatter = colored('%(asctime)s', 'magenta')+' '+colored('>', 'cyan')+' '+colored('%(message)s', 'yellow')
+    logging.basicConfig(format=formatter, datefmt='%H:%M:%S')
     logger.setLevel(logging.INFO)
 
-    # read files names from stdin, one line as one file
-    lines = sys.stdin.readlines()
-    files = [line.rstrip('\n') for line in lines]
-
-    # filename: file's update time
-    dct = {}
-
     try:
-        logger.info("started, ctrl-c to stop")
+        logger.info('started, ctrl-c to stop')
+
+        mdtimes = []  # files' modified times
+
         while 1:
-            time.sleep(1)  # check every 1s
-            new_dct = dict((f, os.stat(f).st_mtime) for f in files)
-            if dct != new_dct:
+            time.sleep(1)
+
+            if not os.path.exists(directory):
+                raise DirectoryNotFound
+
+            files = []
+            for root, dirnames, filenames in os.walk(directory):
+                for filename in fnmatch.filter(filenames, pattern):
+                    files.append(os.path.join(root, filename))
+
+            new_mdtimes = dict((f, os.stat(f).st_mtime) for f in files)
+
+            if mdtimes != new_mdtimes:
                 logger.info("changes detected, run `%s`.." % command)
-                dct = new_dct
-                proc = subprocess.Popen(command, shell=True, stdout=sys.stdout,
-                                stderr=sys.stderr)
+
+                proc = subprocess.Popen(
+                    command, shell=True, stdout=sys.stdout, stderr=sys.stderr
+                )
                 proc.communicate()  # wait for completion
                 if proc.returncode:  # not 0
-                    # red: 31
-                    logger.error("{0}31mcommand `{2}` runs out error!{1}".format(
-                        prefix, suffix, command
-                    ))
-                dct = new_dct
+                    logger.error(colored("command `%s` runs out error!" % command, 'red'))  # red warning
+                mdtimes = new_mdtimes
                 logger.info("waiting for changes..")
+
+
     except KeyboardInterrupt:
         logger.info("^C received, stopped")
+        sys.exit(0)
+    except OnChangesException as e:
+        logger.error(colored(e.__doc__, 'red'))
+        sys.exit(1)
 
 
 if __name__ == '__main__':
