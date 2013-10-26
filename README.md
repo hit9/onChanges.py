@@ -19,5 +19,9 @@ Examples
 ---------
 
 ```bash
-onChanges -r make -d . -p '*.c'
+onChanges -r make -d src -p '*.c'
+```
+
+```bash
+onChanges -r 'make html' -d docs -p '*.rst'
 ```
